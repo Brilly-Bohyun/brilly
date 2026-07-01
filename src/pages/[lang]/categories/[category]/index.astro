@@ -16,14 +16,17 @@ export async function getStaticPaths() {
 
 const lang = Astro.params.lang as Lang;
 const category = Astro.params.category as string;
-const posts = (await getPosts(lang)).filter((post) => post.data.category === category);
+const allPosts = await getPosts(lang);
+const posts = allPosts.filter((post) => post.data.category === category);
 ---
 
 <BaseLayout lang={lang} title={categoryLabel(category, lang)}>
-  <div class="section-head">
-    <h1>{categoryLabel(category, lang)}</h1>
-  </div>
-  <div class="post-grid">
-    {posts.map((post) => <PostCard post={post} />)}
-  </div>
+  <section>
+    <div class="section-head">
+      <h1>{categoryLabel(category, lang)}</h1>
+    </div>
+    <div class="post-grid">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </section>
 </BaseLayout>

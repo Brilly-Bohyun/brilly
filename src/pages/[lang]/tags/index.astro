@@ -16,7 +16,7 @@ const tags = uniqueTags(await getPosts(lang));
   <div class="section-head">
     <h1>{t.tags}</h1>
   </div>
-  <div class="chip-row">
+  <div class="tag-cloud chip-row">
     {tags.map((tag) => <a class="chip" href={withBase(`/${lang}/tags/${tag}/`)}>{tag}</a>)}
   </div>
 </BaseLayout>

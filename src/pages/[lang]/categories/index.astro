@@ -14,19 +14,21 @@ const groups = categoryGroups(posts, lang);
 ---
 
 <BaseLayout lang={lang} title={t.categories}>
-  <div class="section-head">
-    <h1>{t.categories}</h1>
-  </div>
-  <div class="taxonomy-grid">
-    {groups.map(([slug, group]) => (
-      <section class="taxonomy-card">
-        <h3><a href={withBase(`/${lang}/categories/${slug}/`)}>{group.label}</a></h3>
-        <div class="chip-row">
-          {[...group.subcategories.entries()].map(([subslug, label]) => (
-            <a class="chip" href={withBase(`/${lang}/categories/${slug}/${subslug}/`)}>{label}</a>
-          ))}
-        </div>
-      </section>
-    ))}
-  </div>
+  <section>
+    <div class="section-head">
+      <h1>{t.categories}</h1>
+    </div>
+    <div class="taxonomy-grid">
+      {groups.map(([slug, group]) => (
+        <section class="taxonomy-card">
+          <h3><a href={withBase(`/${lang}/categories/${slug}/`)}>{group.label}</a></h3>
+          <div class="chip-row">
+            {[...group.subcategories.entries()].map(([subslug, label]) => (
+              <a class="chip" href={withBase(`/${lang}/categories/${slug}/${subslug}/`)}>{label}</a>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </section>
 </BaseLayout>

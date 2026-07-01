@@ -1,4 +1,5 @@
 ---
+import { categoryGroups, getPosts } from "../lib/blog";
 import { labels, otherLang, site, type Lang, withBase } from "../lib/site";
 
 const { lang } = Astro.props as { lang: Lang };
@@ -6,20 +7,56 @@ const t = labels[lang];
 const alternate = otherLang(lang);
 const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ""), "");
 const alternatePath = pathname.replace(`/${lang}`, `/${alternate}`);
+const searchCategories = categoryGroups(await getPosts(lang), lang);
 ---
 
 <header class="site-header">
   <nav class="nav" aria-label="Primary">
-    <a class="brand" href={withBase(`/${lang}/`)}>
-      <img src={withBase("/assets/mascot/brilly-turtle.png")} alt="" width="38" height="38" />
-      <span>{site.name}</span>
-    </a>
-    <div class="nav-links">
-      <a href={withBase(`/${lang}/posts/`)}>{t.navPosts}</a>
-      <a href={withBase(`/${lang}/categories/`)}>{t.navCategories}</a>
-      <a href={withBase(`/${lang}/tags/`)}>{t.navTags}</a>
+    <div class="brand">
+      <button
+        class="brand-toggle"
+        type="button"
+        data-sidebar-toggle
+        data-collapse-label={t.collapseSidebar}
+        data-expand-label={t.expandSidebar}
+        aria-label={t.collapseSidebar}
+        aria-expanded="true"
+      >
+        <img src={withBase("/assets/mascot/brilly-turtle.png")} alt="" width="38" height="38" />
+      </button>
+      <a class="brand-word" href={withBase(`/${lang}/`)}>{site.name}</a>
     </div>
-    <button class="nav-button" type="button" data-search-open>{t.search}</button>
+    <div class="top-search" data-search-shell data-no-results={t.noResults}>
+      <form class="search-form" data-search-form role="search">
+        <input
+          class="search-input"
+          name="q"
+          type="search"
+          placeholder={t.searchPlaceholder}
+          autocomplete="off"
+          data-search-input
+        />
+        <button class="search-clear" type="button" aria-label={t.clearSearch} data-search-clear hidden>×</button>
+        <button class="search-submit" type="submit" aria-label={t.search}>⌕</button>
+      </form>
+      <div class="search-panel" data-search-panel hidden>
+        <div class="search-filters" aria-label={t.categories}>
+          {searchCategories.map(([slug, group]) => (
+            <div class="search-filter-group">
+              <button class="search-filter" type="button" data-search-filter data-filter-key="category" data-filter-value={slug}>
+                {group.label}
+              </button>
+              {[...group.subcategories.entries()].map(([subslug, label]) => (
+                <button class="search-filter is-child" type="button" data-search-filter data-filter-key="subcategory" data-filter-value={subslug}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div class="search-results" data-search-results hidden></div>
+      </div>
+    </div>
     <a class="icon-button" href={withBase(alternatePath || `/${alternate}/`)} aria-label="Switch language">
       {t.language}
     </a>

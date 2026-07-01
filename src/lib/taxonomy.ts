@@ -4,7 +4,7 @@ type Localized = Record<Lang, string>;
 
 export const taxonomy = {
   meta: {
-    label: { ko: "메타", en: "Meta" },
+    label: { ko: "인사말", en: "Greeting" },
     subcategories: {
       starting: { ko: "시작", en: "Starting" }
     }

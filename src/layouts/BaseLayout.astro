@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro";
-import { labels, site, type Lang, withBase } from "../lib/site";
+import AppSidebar from "../components/AppSidebar.astro";
+import { site, type Lang, withBase } from "../lib/site";
 import "../styles/global.css";
 
 const {
@@ -24,66 +25,101 @@ const pageTitle = title === site.name ? site.name : `${title} | ${site.name}`;
     <title>{pageTitle}</title>
     <link rel="icon" href={withBase("/favicon.svg")} />
     <script is:inline>
-      const saved = localStorage.getItem("theme");
-      const theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      const saved = localStorage.getItem("brilly-theme");
+      const theme = saved || "dark";
       document.documentElement.dataset.theme = theme;
+      document.documentElement.dataset.sidebar = localStorage.getItem("brilly-sidebar") || "expanded";
     </script>
   </head>
   <body>
     <div class="site-shell">
-      <Header lang={lang} />
-      <main class="main">
-        <slot />
-      </main>
-      <footer class="site-footer">
-        <span>{site.name}</span>
-        <span> · </span>
-        <a href={site.github}>GitHub</a>
-      </footer>
+      <AppSidebar lang={lang} />
+      <div class="site-pane">
+        <Header lang={lang} />
+        <main class="main">
+          <slot />
+        </main>
+        <footer class="site-footer">
+          <span>{site.name}</span>
+          <span> · </span>
+          <a href={site.github}>GitHub</a>
+        </footer>
+      </div>
     </div>
-    <dialog class="search-dialog" data-search-dialog>
-      <section class="search-panel" aria-label={labels[lang].search}>
-        <form class="search-form" data-search-form>
-          <input class="search-input" name="q" type="search" placeholder={labels[lang].search} autocomplete="off" />
-          <button class="nav-button" type="button" data-search-close>Esc</button>
-        </form>
-        <div class="search-results" data-search-results></div>
-      </section>
-    </dialog>
     <script is:inline>
       const baseUrl = document.querySelector('link[rel="icon"]')?.getAttribute("href")?.replace(/\/favicon\.svg$/, "") || "";
-      const dialog = document.querySelector("[data-search-dialog]");
-      const openSearch = document.querySelector("[data-search-open]");
-      const closeSearch = document.querySelector("[data-search-close]");
+      const sidebarToggle = document.querySelector("[data-sidebar-toggle]");
+      const searchShell = document.querySelector("[data-search-shell]");
+      const searchPanel = document.querySelector("[data-search-panel]");
       const form = document.querySelector("[data-search-form]");
-      const input = form?.elements.q;
+      const input = document.querySelector("[data-search-input]");
+      const clearSearch = document.querySelector("[data-search-clear]");
+      const filterButtons = document.querySelectorAll("[data-search-filter]");
       const results = document.querySelector("[data-search-results]");
+      let selectedFilter = { key: "", value: "" };
       let pagefind;
 
-      openSearch?.addEventListener("click", () => {
-        dialog?.showModal();
-        input?.focus();
-      });
+      const setSidebar = (state) => {
+        document.documentElement.dataset.sidebar = state;
+        localStorage.setItem("brilly-sidebar", state);
+        sidebarToggle?.setAttribute("aria-expanded", state === "expanded" ? "true" : "false");
+        sidebarToggle?.setAttribute(
+          "aria-label",
+          state === "expanded"
+            ? sidebarToggle.dataset.collapseLabel || ""
+            : sidebarToggle.dataset.expandLabel || ""
+        );
+      };
 
-      closeSearch?.addEventListener("click", () => dialog?.close());
-
-      dialog?.addEventListener("click", (event) => {
-        if (event.target === dialog) dialog.close();
+      setSidebar(document.documentElement.dataset.sidebar === "collapsed" ? "collapsed" : "expanded");
+      sidebarToggle?.addEventListener("click", () => {
+        setSidebar(document.documentElement.dataset.sidebar === "collapsed" ? "expanded" : "collapsed");
       });
 
       form?.addEventListener("submit", (event) => event.preventDefault());
 
-      input?.addEventListener("input", async () => {
-        const query = input.value.trim();
+      const setSearchOpen = (open) => {
+        if (!searchPanel || !searchShell) return;
+        searchPanel.hidden = !open;
+        searchShell.classList.toggle("is-open", open);
+      };
+
+      const syncClearButton = () => {
+        if (!input || !clearSearch || !searchShell) return;
+        const hasQuery = Boolean(input.value);
+        clearSearch.hidden = !hasQuery;
+        searchShell.classList.toggle("has-query", hasQuery);
+      };
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const key = button.dataset.filterKey || "";
+          const value = button.dataset.filterValue || "";
+          const isSame = selectedFilter.key === key && selectedFilter.value === value;
+          selectedFilter = isSame ? { key: "", value: "" } : { key, value };
+          filterButtons.forEach((item) => {
+            const active = item.dataset.filterKey === selectedFilter.key && item.dataset.filterValue === selectedFilter.value;
+            item.classList.toggle("is-active", active);
+            item.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+          runSearch();
+        });
+      });
+
+      const runSearch = async () => {
+        const query = input?.value.trim() || "";
+        syncClearButton();
         if (!results) return;
         if (!query) {
           results.innerHTML = "";
+          results.hidden = true;
           return;
         }
 
         try {
           pagefind ||= await import(`${baseUrl}/pagefind/pagefind.js`);
-          const search = await pagefind.search(query);
+          const options = selectedFilter.value ? { filters: { [selectedFilter.key]: [selectedFilter.value] } } : {};
+          const search = await pagefind.search(query, options);
           const items = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
           results.innerHTML = items.length
             ? items
@@ -91,10 +127,28 @@ const pageTitle = title === site.name ? site.name : `${title} | ${site.name}`;
                   (item) => `<a class="search-result" href="${item.url}"><strong>${item.meta.title || item.excerpt}</strong><small>${item.excerpt}</small></a>`
                 )
                 .join("")
-            : `<div class="empty"><div><img src="${baseUrl}/assets/mascot/brilly-turtle.png" alt="" /><p>No results</p></div></div>`;
+            : `<div class="search-empty">${searchShell?.dataset.noResults || "No results."}</div>`;
+          results.hidden = false;
         } catch {
-          results.innerHTML = `<div class="empty"><div><p>Search index is available after build.</p></div></div>`;
+          results.innerHTML = `<div class="search-empty">Search index is available after build.</div>`;
+          results.hidden = false;
         }
+      };
+
+      syncClearButton();
+      input?.addEventListener("focus", () => setSearchOpen(true));
+      input?.addEventListener("input", runSearch);
+      clearSearch?.addEventListener("click", () => {
+        if (!input || !results) return;
+        input.value = "";
+        results.innerHTML = "";
+        results.hidden = true;
+        syncClearButton();
+        setSearchOpen(true);
+        input.focus();
+      });
+      document.addEventListener("click", (event) => {
+        if (!searchShell?.contains(event.target)) setSearchOpen(false);
       });
 
       const setGiscusTheme = (theme) => {
@@ -109,7 +163,7 @@ const pageTitle = title === site.name ? site.name : `${title} | ${site.name}`;
       document.querySelector("[data-theme-toggle]")?.addEventListener("click", () => {
         const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
         document.documentElement.dataset.theme = next;
-        localStorage.setItem("theme", next);
+        localStorage.setItem("brilly-theme", next);
         setGiscusTheme(next);
       });
     </script>
