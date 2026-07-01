@@ -1,0 +1,117 @@
+---
+import Header from "../components/Header.astro";
+import { labels, site, type Lang, withBase } from "../lib/site";
+import "../styles/global.css";
+
+const {
+  lang,
+  title = site.name,
+  description = site.description
+} = Astro.props as { lang: Lang; title?: string; description?: string };
+
+const pageTitle = title === site.name ? site.name : `${title} | ${site.name}`;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <title>{pageTitle}</title>
+    <link rel="icon" href={withBase("/favicon.svg")} />
+    <script is:inline>
+      const saved = localStorage.getItem("theme");
+      const theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+    </script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <Header lang={lang} />
+      <main class="main">
+        <slot />
+      </main>
+      <footer class="site-footer">
+        <span>{site.name}</span>
+        <span> · </span>
+        <a href={site.github}>GitHub</a>
+      </footer>
+    </div>
+    <dialog class="search-dialog" data-search-dialog>
+      <section class="search-panel" aria-label={labels[lang].search}>
+        <form class="search-form" data-search-form>
+          <input class="search-input" name="q" type="search" placeholder={labels[lang].search} autocomplete="off" />
+          <button class="nav-button" type="button" data-search-close>Esc</button>
+        </form>
+        <div class="search-results" data-search-results></div>
+      </section>
+    </dialog>
+    <script is:inline>
+      const baseUrl = document.querySelector('link[rel="icon"]')?.getAttribute("href")?.replace(/\/favicon\.svg$/, "") || "";
+      const dialog = document.querySelector("[data-search-dialog]");
+      const openSearch = document.querySelector("[data-search-open]");
+      const closeSearch = document.querySelector("[data-search-close]");
+      const form = document.querySelector("[data-search-form]");
+      const input = form?.elements.q;
+      const results = document.querySelector("[data-search-results]");
+      let pagefind;
+
+      openSearch?.addEventListener("click", () => {
+        dialog?.showModal();
+        input?.focus();
+      });
+
+      closeSearch?.addEventListener("click", () => dialog?.close());
+
+      dialog?.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+
+      form?.addEventListener("submit", (event) => event.preventDefault());
+
+      input?.addEventListener("input", async () => {
+        const query = input.value.trim();
+        if (!results) return;
+        if (!query) {
+          results.innerHTML = "";
+          return;
+        }
+
+        try {
+          pagefind ||= await import(`${baseUrl}/pagefind/pagefind.js`);
+          const search = await pagefind.search(query);
+          const items = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
+          results.innerHTML = items.length
+            ? items
+                .map(
+                  (item) => `<a class="search-result" href="${item.url}"><strong>${item.meta.title || item.excerpt}</strong><small>${item.excerpt}</small></a>`
+                )
+                .join("")
+            : `<div class="empty"><div><img src="${baseUrl}/assets/mascot/brilly-turtle.png" alt="" /><p>No results</p></div></div>`;
+        } catch {
+          results.innerHTML = `<div class="empty"><div><p>Search index is available after build.</p></div></div>`;
+        }
+      });
+
+      const setGiscusTheme = (theme) => {
+        const frame = document.querySelector("iframe.giscus-frame");
+        if (!frame) return;
+        frame.contentWindow?.postMessage(
+          { giscus: { setConfig: { theme: theme === "dark" ? "dark" : "light" } } },
+          "https://giscus.app"
+        );
+      };
+
+      document.querySelector("[data-theme-toggle]")?.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("theme", next);
+        setGiscusTheme(next);
+      });
+    </script>
+  </body>
+</html>

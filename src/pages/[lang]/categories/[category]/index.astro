@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import PostCard from "../../../../components/PostCard.astro";
+import { getPosts } from "../../../../lib/blog";
+import { categoryLabel } from "../../../../lib/taxonomy";
+import { type Lang } from "../../../../lib/site";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const paths = new Set(posts.map((post) => `${post.data.lang}/${post.data.category}`));
+  return [...paths].map((path) => {
+    const [lang, category] = path.split("/");
+    return { params: { lang, category } };
+  });
+}
+
+const lang = Astro.params.lang as Lang;
+const category = Astro.params.category as string;
+const posts = (await getPosts(lang)).filter((post) => post.data.category === category);
+---
+
+<BaseLayout lang={lang} title={categoryLabel(category, lang)}>
+  <div class="section-head">
+    <h1>{categoryLabel(category, lang)}</h1>
+  </div>
+  <div class="post-grid">
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+</BaseLayout>

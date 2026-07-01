@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getPosts, uniqueTags } from "../../../lib/blog";
+import { labels, type Lang, withBase } from "../../../lib/site";
+
+export function getStaticPaths() {
+  return ["ko", "en"].map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = labels[lang];
+const tags = uniqueTags(await getPosts(lang));
+---
+
+<BaseLayout lang={lang} title={t.tags}>
+  <div class="section-head">
+    <h1>{t.tags}</h1>
+  </div>
+  <div class="chip-row">
+    {tags.map((tag) => <a class="chip" href={withBase(`/${lang}/tags/${tag}/`)}>{tag}</a>)}
+  </div>
+</BaseLayout>

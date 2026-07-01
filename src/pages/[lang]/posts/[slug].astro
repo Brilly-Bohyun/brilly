@@ -1,0 +1,58 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Comments from "../../../components/Comments.astro";
+import { formatDate, getPosts, getTranslation, postPath, slugOf, type BlogPost } from "../../../lib/blog";
+import { categoryLabel, subcategoryLabel } from "../../../lib/taxonomy";
+import { labels, type Lang, withBase } from "../../../lib/site";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { lang: post.data.lang, slug: slugOf(post) },
+    props: { post }
+  }));
+}
+
+const { post } = Astro.props as { post: BlogPost };
+const lang = post.data.lang;
+const t = labels[lang];
+const translated = await getTranslation(post);
+const { Content } = await render(post);
+---
+
+<BaseLayout lang={lang} title={post.data.title} description={post.data.description}>
+  <article class="article" data-pagefind-body>
+    <header class="article-header">
+      <div class="crumbs">
+        <a class="chip" href={withBase(`/${lang}/categories/${post.data.category}/`)}>
+          {categoryLabel(post.data.category, lang)}
+        </a>
+        <a class="chip" href={withBase(`/${lang}/categories/${post.data.category}/${post.data.subcategory}/`)}>
+          {subcategoryLabel(post.data.category, post.data.subcategory, lang)}
+        </a>
+        {translated && <a class="chip" href={withBase(postPath(translated))}>{labels[translated.data.lang].language}</a>}
+      </div>
+      <h1 data-pagefind-meta="title">{post.data.title}</h1>
+      <p class="article-description">{post.data.description}</p>
+      <div class="post-meta">
+        <time datetime={post.data.date.toISOString()} data-pagefind-meta={`date:${post.data.date.toISOString().slice(0, 10)}`}>
+          {formatDate(post.data.date, lang)}
+        </time>
+        <span data-pagefind-filter={`language:${lang}`}>{lang.toUpperCase()}</span>
+        <span data-pagefind-filter={`category:${post.data.category}`}>{categoryLabel(post.data.category, lang)}</span>
+        <span data-pagefind-filter={`subcategory:${post.data.subcategory}`}>
+          {subcategoryLabel(post.data.category, post.data.subcategory, lang)}
+        </span>
+        {post.data.tags.map((tag) => <span data-pagefind-filter={`tag:${tag}`}>{tag}</span>)}
+      </div>
+      <div class="chip-row">
+        {post.data.tags.map((tag) => <a class="chip" href={withBase(`/${lang}/tags/${tag}/`)}>{tag}</a>)}
+      </div>
+    </header>
+    <div class="article-body">
+      <Content />
+    </div>
+  </article>
+  <Comments lang={lang} enabled={post.data.comments} />
+</BaseLayout>

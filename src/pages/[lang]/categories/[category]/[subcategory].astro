@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import PostCard from "../../../../components/PostCard.astro";
+import { getPosts } from "../../../../lib/blog";
+import { categoryLabel, subcategoryLabel } from "../../../../lib/taxonomy";
+import { type Lang } from "../../../../lib/site";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const paths = new Set(posts.map((post) => `${post.data.lang}/${post.data.category}/${post.data.subcategory}`));
+  return [...paths].map((path) => {
+    const [lang, category, subcategory] = path.split("/");
+    return { params: { lang, category, subcategory } };
+  });
+}
+
+const lang = Astro.params.lang as Lang;
+const category = Astro.params.category as string;
+const subcategory = Astro.params.subcategory as string;
+const posts = (await getPosts(lang)).filter(
+  (post) => post.data.category === category && post.data.subcategory === subcategory
+);
+---
+
+<BaseLayout lang={lang} title={`${categoryLabel(category, lang)} / ${subcategoryLabel(category, subcategory, lang)}`}>
+  <div class="section-head">
+    <h1>{subcategoryLabel(category, subcategory, lang)}</h1>
+  </div>
+  <div class="post-grid">
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+</BaseLayout>
