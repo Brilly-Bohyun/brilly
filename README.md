@@ -15,6 +15,15 @@ npm run dev
 npm run build
 ```
 
+## GitHub Pages
+
+In the repository settings, open Pages and set Source to GitHub Actions.
+The deploy workflow publishes the site to:
+
+```text
+https://brilly-bohyun.github.io/brilly/
+```
+
 ## Comments
 
 Create `Brilly-Bohyun/brilly`, enable Discussions, create a `Comments` category,
