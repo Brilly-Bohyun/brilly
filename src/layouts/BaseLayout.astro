@@ -38,8 +38,11 @@ const footer = lang === "ko"
     <script is:inline>
       const saved = localStorage.getItem("brilly-theme");
       const theme = saved || "dark";
+      const initialSidebarMedia = matchMedia("(min-width: 1400px)");
       document.documentElement.dataset.theme = theme;
-      document.documentElement.dataset.sidebar = localStorage.getItem("brilly-sidebar") || "expanded";
+      document.documentElement.dataset.sidebar = initialSidebarMedia.matches
+        ? localStorage.getItem("brilly-sidebar") || "expanded"
+        : "collapsed";
     </script>
   </head>
   <body>
@@ -103,9 +106,11 @@ const footer = lang === "ko"
       let selectedFilter = { key: "", value: "" };
       let pagefind;
 
-      const setSidebar = (state) => {
+      const sidebarMedia = matchMedia("(min-width: 1400px)");
+      const savedSidebar = () => (sidebarMedia.matches ? localStorage.getItem("brilly-sidebar") || "expanded" : "collapsed");
+      const setSidebar = (state, persist = sidebarMedia.matches) => {
         document.documentElement.dataset.sidebar = state;
-        localStorage.setItem("brilly-sidebar", state);
+        if (persist) localStorage.setItem("brilly-sidebar", state);
         sidebarToggle?.setAttribute("aria-expanded", state === "expanded" ? "true" : "false");
         sidebarToggle?.setAttribute(
           "aria-label",
@@ -115,9 +120,10 @@ const footer = lang === "ko"
         );
       };
 
-      setSidebar(document.documentElement.dataset.sidebar === "collapsed" ? "collapsed" : "expanded");
+      setSidebar(savedSidebar(), false);
+      sidebarMedia.addEventListener("change", () => setSidebar(savedSidebar(), false));
       sidebarToggle?.addEventListener("click", () => {
-        setSidebar(document.documentElement.dataset.sidebar === "collapsed" ? "expanded" : "collapsed");
+        setSidebar(document.documentElement.dataset.sidebar === "collapsed" ? "expanded" : "collapsed", sidebarMedia.matches);
       });
 
       form?.addEventListener("submit", (event) => event.preventDefault());
@@ -199,7 +205,7 @@ const footer = lang === "ko"
         const frame = document.querySelector("iframe.giscus-frame");
         if (!frame) return;
         frame.contentWindow?.postMessage(
-          { giscus: { setConfig: { theme: theme === "dark" ? "dark" : "light" } } },
+          { giscus: { setConfig: { theme: theme === "dark" ? "noborder_dark" : "noborder_light" } } },
           "https://giscus.app"
         );
       };

@@ -25,22 +25,24 @@ const copy = lang === "ko"
   <section class="comments" aria-label={labels[lang].comments}>
     <h2>{labels[lang].comments}</h2>
     {ready ? (
-      <script
-        src="https://giscus.app/client.js"
-        data-repo={giscus.repo}
-        data-repo-id={giscus.repoId}
-        data-category={giscus.category}
-        data-category-id={giscus.categoryId}
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="preferred_color_scheme"
-        data-lang={giscusLang}
-        crossorigin="anonymous"
-        async
-      />
+      <div class="giscus-shell">
+        <script
+          src="https://giscus.app/client.js"
+          data-repo={giscus.repo}
+          data-repo-id={giscus.repoId}
+          data-category={giscus.category}
+          data-category-id={giscus.categoryId}
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="0"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="noborder_dark"
+          data-lang={giscusLang}
+          crossorigin="anonymous"
+          async
+        />
+      </div>
     ) : (
       <div class="comment-fallback" data-comment-root data-empty-label={copy.empty}>
         <form class="comment-form" data-comment-form>
