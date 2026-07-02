@@ -15,14 +15,12 @@ const footer = lang === "ko"
   ? {
       prompt: "bohyun@brilly:~$",
       intro: "회사 소개 대신, 제가 배운 것과 만들고 싶은 것을 남기는 개인 작업실입니다.",
-      placeholder: "명령어 입력",
-      buttons: ["whoami", "posts", "github", "linkedin", "clear"]
+      placeholder: "명령어 입력"
     }
   : {
       prompt: "bohyun@brilly:~$",
       intro: "Less company page, more personal workshop for notes, talks, and things learned in public.",
-      placeholder: "type a command",
-      buttons: ["whoami", "posts", "github", "linkedin", "clear"]
+      placeholder: "type a command"
     };
 ---
 
@@ -74,20 +72,19 @@ const footer = lang === "ko"
               <div class="terminal-output" data-terminal-output aria-live="polite">
                 <div class="terminal-line is-command">
                   <span class="terminal-prompt">$</span>
-                  <span class="terminal-command">whoami</span>
+                  <span class="terminal-command">help</span>
                 </div>
-                <div class="terminal-line is-result">Bohyun Choi - open source, talks, developer experience.</div>
-                <div class="terminal-line is-muted">try: help, posts, github, linkedin</div>
+                <div class="terminal-line is-muted">available commands</div>
+                <div class="terminal-line is-result">whoami        show profile</div>
+                <div class="terminal-line is-result">posts         list posts</div>
+                <div class="terminal-line is-result">github        show GitHub link</div>
+                <div class="terminal-line is-result">linkedin      show LinkedIn link</div>
+                <div class="terminal-line is-result">clear         clear terminal</div>
               </div>
               <form class="terminal-input-row" data-terminal-form>
                 <span class="terminal-prompt">$</span>
                 <input data-terminal-input autocomplete="off" spellcheck="false" aria-label={footer.placeholder} placeholder={footer.placeholder} />
               </form>
-              <div class="terminal-actions">
-                {footer.buttons.map((command) => (
-                  <button type="button" data-terminal-command={command}>{command}</button>
-                ))}
-              </div>
             </div>
           </div>
         </footer>
@@ -214,20 +211,11 @@ const footer = lang === "ko"
         setGiscusTheme(next);
       });
 
-      const formatCompact = (value) =>
-        new Intl.NumberFormat(document.documentElement.lang === "ko" ? "ko-KR" : "en", {
-          notation: "compact",
-          maximumFractionDigits: 1
-        }).format(value);
-
       document.querySelectorAll("[data-like-button]").forEach((button) => {
         const key = `brilly-like:${button.dataset.postKey}`;
-        const count = button.querySelector("[data-stat-count]");
-        const base = Number(button.dataset.baseCount || 0);
         const render = () => {
           const liked = localStorage.getItem(key) === "1";
           button.classList.toggle("is-active", liked);
-          count.textContent = formatCompact(base + (liked ? 1 : 0));
         };
         render();
         button.addEventListener("click", () => {
@@ -236,33 +224,11 @@ const footer = lang === "ko"
         });
       });
 
-      document.querySelectorAll("[data-view-count]").forEach((count) => {
-        const key = `brilly-view:${count.dataset.postKey}`;
-        const seenKey = `${key}:seen`;
-        const base = Number(count.dataset.baseCount || 0);
-        let views = Number(localStorage.getItem(key) || 0);
-        if (!sessionStorage.getItem(seenKey)) {
-          views += 1;
-          localStorage.setItem(key, String(views));
-          sessionStorage.setItem(seenKey, "1");
-        }
-        count.textContent = formatCompact(base + views);
-      });
-
       document.querySelectorAll("[data-share-button]").forEach((button) => {
-        const count = button.querySelector("[data-share-count]");
-        const key = `brilly-share:${button.dataset.postKey}`;
-        const base = Number(button.dataset.baseCount || 0);
-        const render = () => {
-          count.textContent = formatCompact(base + Number(localStorage.getItem(key) || 0));
-        };
-        render();
         button.addEventListener("click", async () => {
           const share = { title: button.dataset.shareTitle || document.title, url: location.href };
           if (navigator.share) await navigator.share(share);
           else await navigator.clipboard?.writeText(location.href);
-          localStorage.setItem(key, String(Number(localStorage.getItem(key) || 0) + 1));
-          render();
         });
       });
 
@@ -271,11 +237,9 @@ const footer = lang === "ko"
       const terminalForm = terminal?.querySelector("[data-terminal-form]");
       const terminalInput = terminal?.querySelector("[data-terminal-input]");
       const terminalResponses = {
-        help: ["commands: whoami, posts, github, linkedin, ls, cat about.txt, clear"],
+        help: ["commands: whoami, posts, github, linkedin, clear"],
         whoami: ["Bohyun Choi", "Open source, systems, talks, developer experience."],
         posts: ["starting-tech-blog.md", "opensource-summit-us-talk.md"],
-        ls: ["about.txt", "posts/", "links/"],
-        "cat about.txt": ["Personal workshop for notes, talks, and things learned in public."],
         github: ["https://github.com/Brilly-Bohyun"],
         linkedin: ["https://www.linkedin.com/in/bohyunchoi/"]
       };
@@ -326,15 +290,6 @@ const footer = lang === "ko"
         if (!terminalInput) return;
         runTerminalCommand(terminalInput.value);
         terminalInput.value = "";
-      });
-
-      terminal?.querySelectorAll("[data-terminal-command]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const command = button.dataset.terminalCommand;
-          if (!command) return;
-          runTerminalCommand(command);
-          terminalInput?.focus();
-        });
       });
     </script>
   </body>

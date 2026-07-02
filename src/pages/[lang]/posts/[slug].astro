@@ -2,9 +2,10 @@
 import { render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Comments from "../../../components/Comments.astro";
-import { formatDate, getPosts, getTranslation, postPath, slugOf, type BlogPost } from "../../../lib/blog";
+import PostCard from "../../../components/PostCard.astro";
+import { formatDate, getPosts, slugOf, type BlogPost } from "../../../lib/blog";
 import { categoryLabel, subcategoryLabel } from "../../../lib/taxonomy";
-import { labels, site, type Lang, withBase } from "../../../lib/site";
+import { site, type Lang, withBase } from "../../../lib/site";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -16,24 +17,15 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props as { post: BlogPost };
 const lang = post.data.lang;
-const t = labels[lang];
-const translated = await getTranslation(post);
 const { Content, headings } = await render(post);
 const slug = slugOf(post);
-const seed = Array.from(slug).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-const baseLikes = 12000 + ((seed * 17) % 15000);
-const baseViews = 34000 + ((seed * 31) % 26000);
-const baseShares = 120 + (seed % 320);
+const currentLanguage = lang === "ko" ? "KR" : "EN";
+const posts = await getPosts();
 const text = post.body ?? "";
 const readMinutes = Math.max(
   1,
   Math.ceil(lang === "ko" ? text.replace(/\s/g, "").length / 650 : text.split(/\s+/).filter(Boolean).length / 220)
 );
-const compactNumber = (value: number) =>
-  new Intl.NumberFormat(lang === "ko" ? "ko-KR" : "en", {
-    notation: "compact",
-    maximumFractionDigits: 1
-  }).format(value);
 const copy = lang === "ko"
   ? {
       publicationDate: "작성일",
@@ -44,6 +36,7 @@ const copy = lang === "ko"
       likes: "좋아요",
       views: "조회수",
       shares: "공유",
+      similarPosts: "비슷한 글",
       min: "분"
     }
   : {
@@ -55,26 +48,38 @@ const copy = lang === "ko"
       likes: "Likes",
       views: "Views",
       shares: "Shares",
+      similarPosts: "Similar Posts",
       min: "min"
     };
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3).slice(0, 8);
+const similarPosts = posts
+  .filter((candidate) => candidate.id !== post.id && candidate.data.lang === lang)
+  .map((candidate) => {
+    const sharedTags = candidate.data.tags.filter((tag) => post.data.tags.includes(tag)).length;
+    const score =
+      (candidate.data.category === post.data.category ? 4 : 0) +
+      (candidate.data.subcategory === post.data.subcategory ? 2 : 0) +
+      sharedTags;
+    return { post: candidate, score };
+  })
+  .sort((a, b) => b.score - a.score || b.post.data.date.valueOf() - a.post.data.date.valueOf())
+  .slice(0, 3)
+  .map((item) => item.post);
 ---
 
 <BaseLayout lang={lang} title={post.data.title} description={post.data.description}>
   <article class="article article-open" data-pagefind-body>
     <header class="article-header">
-      {translated && (
-        <div class="crumbs">
-          <a class="chip" href={withBase(postPath(translated))}>{translated.data.lang.toUpperCase()}</a>
-        </div>
-      )}
+      <div class="crumbs">
+        <span class="chip">{currentLanguage}</span>
+      </div>
       <h1 data-pagefind-meta="title">{post.data.title}</h1>
       <p class="article-description">{post.data.description}</p>
       <div class="post-meta article-topline">
         <time datetime={post.data.date.toISOString()} data-pagefind-meta={`date:${post.data.date.toISOString().slice(0, 10)}`}>
           {formatDate(post.data.date, lang)}
         </time>
-        <span data-pagefind-filter={`language:${lang}`}>{lang.toUpperCase()}</span>
+        <span data-pagefind-filter={`language:${lang}`}>{currentLanguage}</span>
         <span data-pagefind-filter={`category:${post.data.category}`}>{categoryLabel(post.data.category, lang)}</span>
         <span data-pagefind-filter={`subcategory:${post.data.subcategory}`}>
           {subcategoryLabel(post.data.category, post.data.subcategory, lang)}
@@ -93,27 +98,22 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
             type="button"
             data-like-button
             data-post-key={slug}
-            data-base-count={baseLikes}
             aria-label={copy.likes}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.2-4.4-9.6-8.4C.5 9.4 2.3 5 6.2 5c2.1 0 3.5 1.1 4.3 2.2C11.3 6.1 12.7 5 14.8 5c3.9 0 5.7 4.4 3.8 7.6C16.2 16.6 12 21 12 21Z" /></svg>
-            <span data-stat-count>{compactNumber(baseLikes)}</span>
           </button>
-          <span class="stat-pill">
+          <span class="stat-pill" aria-label={copy.views}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>
-            <span data-view-count data-post-key={slug} data-base-count={baseViews}>{compactNumber(baseViews)}</span>
           </span>
           <button
             class="stat-pill"
             type="button"
             data-share-button
             data-post-key={slug}
-            data-base-count={baseShares}
             data-share-title={post.data.title}
             aria-label={copy.shares}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10 14" /><path d="m21 3-7 19-4-8-8-4 19-7Z" /></svg>
-            <span data-share-count>{compactNumber(baseShares)}</span>
           </button>
         </div>
 
@@ -155,5 +155,15 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       </div>
     </div>
   </article>
+  {similarPosts.length > 0 && (
+    <section class="similar-posts" data-pagefind-ignore>
+      <div class="section-head latest-head">
+        <h2>{copy.similarPosts}</h2>
+      </div>
+      <div class="post-grid similar-grid">
+        {similarPosts.map((item) => <PostCard post={item} />)}
+      </div>
+    </section>
+  )}
   <Comments lang={lang} enabled={post.data.comments} />
 </BaseLayout>

@@ -4,26 +4,121 @@ import { giscus, labels, type Lang } from "../lib/site";
 const { lang, enabled } = Astro.props as { lang: Lang; enabled: boolean };
 const ready = enabled && giscus.repoId && giscus.categoryId;
 const giscusLang = lang === "ko" ? "ko" : "en";
+const copy = lang === "ko"
+  ? {
+      name: "이름",
+      comment: "댓글",
+      placeholder: "생각을 남겨주세요.",
+      submit: "댓글 남기기",
+      empty: "아직 댓글이 없습니다."
+    }
+  : {
+      name: "Name",
+      comment: "Comment",
+      placeholder: "Leave a thought.",
+      submit: "Post comment",
+      empty: "No comments yet."
+    };
 ---
 
-{ready && (
+{enabled && (
   <section class="comments" aria-label={labels[lang].comments}>
     <h2>{labels[lang].comments}</h2>
-    <script
-      src="https://giscus.app/client.js"
-      data-repo={giscus.repo}
-      data-repo-id={giscus.repoId}
-      data-category={giscus.category}
-      data-category-id={giscus.categoryId}
-      data-mapping="pathname"
-      data-strict="0"
-      data-reactions-enabled="1"
-      data-emit-metadata="0"
-      data-input-position="bottom"
-      data-theme="preferred_color_scheme"
-      data-lang={giscusLang}
-      crossorigin="anonymous"
-      async
-    />
+    {ready ? (
+      <script
+        src="https://giscus.app/client.js"
+        data-repo={giscus.repo}
+        data-repo-id={giscus.repoId}
+        data-category={giscus.category}
+        data-category-id={giscus.categoryId}
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang={giscusLang}
+        crossorigin="anonymous"
+        async
+      />
+    ) : (
+      <div class="comment-fallback" data-comment-root data-empty-label={copy.empty}>
+        <form class="comment-form" data-comment-form>
+          <label>
+            <span>{copy.name}</span>
+            <input name="name" autocomplete="name" required />
+          </label>
+          <label>
+            <span>{copy.comment}</span>
+            <textarea name="message" rows="4" placeholder={copy.placeholder} required></textarea>
+          </label>
+          <button type="submit">{copy.submit}</button>
+        </form>
+        <div class="comment-list" data-comment-list></div>
+      </div>
+    )}
   </section>
 )}
+
+<script is:inline>
+  document.querySelectorAll("[data-comment-root]").forEach((root) => {
+    const form = root.querySelector("[data-comment-form]");
+    const list = root.querySelector("[data-comment-list]");
+    const key = `brilly-comments:${location.pathname}`;
+    const empty = root.dataset.emptyLabel || "No comments yet.";
+
+    const read = () => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      } catch {
+        return [];
+      }
+    };
+
+    const render = () => {
+      const comments = read();
+      if (!list) return;
+      list.textContent = "";
+      if (!comments.length) {
+        const item = document.createElement("p");
+        item.className = "comment-empty";
+        item.textContent = empty;
+        list.append(item);
+        return;
+      }
+      comments.forEach((comment) => {
+        const item = document.createElement("article");
+        item.className = "comment-item";
+        const name = document.createElement("strong");
+        const time = document.createElement("time");
+        const message = document.createElement("p");
+        name.textContent = comment.name;
+        time.textContent = comment.date;
+        message.textContent = comment.message;
+        item.append(name, time, message);
+        list.append(item);
+      });
+    };
+
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const name = String(data.get("name") || "").trim();
+      const message = String(data.get("message") || "").trim();
+      if (!name || !message) return;
+      const comments = read();
+      comments.unshift({
+        name,
+        message,
+        date: new Intl.DateTimeFormat(document.documentElement.lang === "ko" ? "ko-KR" : "en", {
+          dateStyle: "medium"
+        }).format(new Date())
+      });
+      localStorage.setItem(key, JSON.stringify(comments.slice(0, 20)));
+      form.reset();
+      render();
+    });
+
+    render();
+  });
+</script>

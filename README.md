@@ -26,10 +26,10 @@ https://brilly-bohyun.github.io/brilly/
 
 ## Comments
 
-Create `Brilly-Bohyun/brilly`, enable Discussions, create a `Comments` category,
-install giscus, then set:
+Enable Discussions on `Brilly-Bohyun/brilly`, choose the `Comment` category in
+giscus, then set:
 
 ```bash
-PUBLIC_GISCUS_REPO_ID=...
-PUBLIC_GISCUS_CATEGORY_ID=...
+PUBLIC_GISCUS_REPO_ID=R_kgDOTKUejg
+PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOTKUejs4DAU-S
 ```

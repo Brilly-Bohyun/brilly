@@ -73,7 +73,7 @@ export function otherLang(lang: Lang): Lang {
 
 export const giscus = {
   repo: site.repo,
-  repoId: import.meta.env.PUBLIC_GISCUS_REPO_ID || "",
-  category: "Comments",
-  categoryId: import.meta.env.PUBLIC_GISCUS_CATEGORY_ID || ""
+  repoId: import.meta.env.PUBLIC_GISCUS_REPO_ID || "R_kgDOTKUejg",
+  category: "Comment",
+  categoryId: import.meta.env.PUBLIC_GISCUS_CATEGORY_ID || "DIC_kwDOTKUejs4DAU-S"
 };

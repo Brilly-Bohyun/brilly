@@ -781,7 +781,6 @@ button.stat-pill {
 .stat-pill svg {
   width: 25px;
   height: 25px;
-  margin-right: 0.5rem;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -926,10 +925,119 @@ button.stat-pill {
   font-family: var(--font-mono);
 }
 
+.similar-posts {
+  max-width: 1120px;
+  margin: 4rem auto 0;
+}
+
+.similar-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+
 .comments {
-  margin-top: 3rem;
+  max-width: 1120px;
+  margin: 3rem auto 0;
   border-top: 1px solid var(--border);
   padding-top: 2rem;
+}
+
+.comments h2 {
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 1.8vw, 1.28rem);
+}
+
+.comment-fallback {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.comment-form,
+.comment-item,
+.comment-empty {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.comment-form {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+
+.comment-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 720;
+}
+
+.comment-form input,
+.comment-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  color: var(--text);
+  background: var(--code);
+  resize: vertical;
+}
+
+.comment-form button {
+  justify-self: start;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  color: #fff;
+  background: var(--accent);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.comment-form p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.comment-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.comment-item,
+.comment-empty {
+  padding: 0.9rem 1rem;
+}
+
+.comment-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 0.8rem;
+}
+
+.comment-item strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-item time,
+.comment-empty {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.comment-item p {
+  grid-column: 1 / -1;
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
 }
 
 .taxonomy-grid {
@@ -986,7 +1094,7 @@ button.stat-pill {
 
 .footer-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 560px);
   gap: 1.2rem;
   max-width: 1180px;
   margin: 0 auto;
@@ -1152,30 +1260,6 @@ button.stat-pill {
   color: color-mix(in srgb, var(--muted), transparent 20%);
 }
 
-.terminal-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  border-top: 1px solid var(--border);
-  padding: 0.75rem;
-}
-
-.terminal-actions button {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.28rem 0.62rem;
-  color: var(--code-text);
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.76rem;
-  line-height: 1.2;
-}
-
-.terminal-actions button:hover {
-  border-color: var(--accent-2);
-  color: var(--accent-2);
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .hero-mascot {
     animation: mascot-idle 3.2s steps(3, end) infinite;
@@ -1211,6 +1295,7 @@ button.stat-pill {
   }
 
   .article-layout,
+  .comment-fallback,
   .footer-inner {
     grid-template-columns: 1fr;
   }
@@ -1308,7 +1393,6 @@ button.stat-pill {
   .stat-pill svg {
     width: 22px;
     height: 22px;
-    margin-right: 0.35rem;
   }
 
   .hero {

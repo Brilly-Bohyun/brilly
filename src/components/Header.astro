@@ -8,8 +8,8 @@ const alternate = otherLang(lang);
 const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ""), "");
 const alternatePath = pathname.replace(`/${lang}`, `/${alternate}`);
 const searchCategories = categoryGroups(await getPosts(lang), lang);
-const currentLanguage = lang.toUpperCase();
-const alternateLanguage = alternate.toUpperCase();
+const languageLabel = (value: Lang) => value === "ko" ? "KR" : "EN";
+const alternateLanguage = languageLabel(alternate);
 ---
 
 <header class="site-header">
@@ -43,14 +43,11 @@ const alternateLanguage = alternate.toUpperCase();
       </form>
       <div class="search-panel" data-search-panel hidden>
         <div class="search-filters" aria-label={t.categories}>
-          {searchCategories.map(([slug, group]) => (
+          {searchCategories.map(([, group]) => (
             <div class="search-filter-group">
-              <button class="search-filter" type="button" data-search-filter data-filter-key="category" data-filter-value={slug}>
-                {group.label}
-              </button>
               {[...group.subcategories.entries()].map(([subslug, label]) => (
-                <button class="search-filter is-child" type="button" data-search-filter data-filter-key="subcategory" data-filter-value={subslug}>
-                  {label}
+                <button class="search-filter" type="button" data-search-filter data-filter-key="subcategory" data-filter-value={subslug}>
+                  {group.label} / {label}
                 </button>
               ))}
             </div>
@@ -60,7 +57,7 @@ const alternateLanguage = alternate.toUpperCase();
       </div>
     </div>
     <a class="icon-button" href={withBase(alternatePath || `/${alternate}/`)} aria-label={`Switch to ${alternateLanguage}`}>
-      {currentLanguage}
+      {alternateLanguage}
     </a>
     <button class="icon-button" type="button" data-theme-toggle aria-label={t.theme}>◐</button>
   </nav>
