@@ -8,6 +8,8 @@ const alternate = otherLang(lang);
 const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ""), "");
 const alternatePath = pathname.replace(`/${lang}`, `/${alternate}`);
 const searchCategories = categoryGroups(await getPosts(lang), lang);
+const currentLanguage = lang.toUpperCase();
+const alternateLanguage = alternate.toUpperCase();
 ---
 
 <header class="site-header">
@@ -57,8 +59,8 @@ const searchCategories = categoryGroups(await getPosts(lang), lang);
         <div class="search-results" data-search-results hidden></div>
       </div>
     </div>
-    <a class="icon-button" href={withBase(alternatePath || `/${alternate}/`)} aria-label="Switch language">
-      {t.language}
+    <a class="icon-button" href={withBase(alternatePath || `/${alternate}/`)} aria-label={`Switch to ${alternateLanguage}`}>
+      {currentLanguage}
     </a>
     <button class="icon-button" type="button" data-theme-toggle aria-label={t.theme}>◐</button>
   </nav>

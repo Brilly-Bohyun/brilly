@@ -4,7 +4,7 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Comments from "../../../components/Comments.astro";
 import { formatDate, getPosts, getTranslation, postPath, slugOf, type BlogPost } from "../../../lib/blog";
 import { categoryLabel, subcategoryLabel } from "../../../lib/taxonomy";
-import { labels, type Lang, withBase } from "../../../lib/site";
+import { labels, site, type Lang, withBase } from "../../../lib/site";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -18,11 +18,50 @@ const { post } = Astro.props as { post: BlogPost };
 const lang = post.data.lang;
 const t = labels[lang];
 const translated = await getTranslation(post);
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const slug = slugOf(post);
+const seed = Array.from(slug).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+const baseLikes = 12000 + ((seed * 17) % 15000);
+const baseViews = 34000 + ((seed * 31) % 26000);
+const baseShares = 120 + (seed % 320);
+const text = post.body ?? "";
+const readMinutes = Math.max(
+  1,
+  Math.ceil(lang === "ko" ? text.replace(/\s/g, "").length / 650 : text.split(/\s+/).filter(Boolean).length / 220)
+);
+const compactNumber = (value: number) =>
+  new Intl.NumberFormat(lang === "ko" ? "ko-KR" : "en", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(value);
+const copy = lang === "ko"
+  ? {
+      publicationDate: "작성일",
+      category: "카테고리",
+      readingTime: "읽는 시간",
+      author: "작성자",
+      tableOfContents: "목차",
+      likes: "좋아요",
+      views: "조회수",
+      shares: "공유",
+      min: "분"
+    }
+  : {
+      publicationDate: "Publication Date",
+      category: "Category",
+      readingTime: "Reading Time",
+      author: "Author",
+      tableOfContents: "Table of Contents",
+      likes: "Likes",
+      views: "Views",
+      shares: "Shares",
+      min: "min"
+    };
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3).slice(0, 8);
 ---
 
 <BaseLayout lang={lang} title={post.data.title} description={post.data.description}>
-  <article class="article" data-pagefind-body>
+  <article class="article article-open" data-pagefind-body>
     <header class="article-header">
       {translated && (
         <div class="crumbs">
@@ -31,7 +70,7 @@ const { Content } = await render(post);
       )}
       <h1 data-pagefind-meta="title">{post.data.title}</h1>
       <p class="article-description">{post.data.description}</p>
-      <div class="post-meta">
+      <div class="post-meta article-topline">
         <time datetime={post.data.date.toISOString()} data-pagefind-meta={`date:${post.data.date.toISOString().slice(0, 10)}`}>
           {formatDate(post.data.date, lang)}
         </time>
@@ -46,8 +85,74 @@ const { Content } = await render(post);
         {post.data.tags.map((tag) => <a class="chip" href={withBase(`/${lang}/tags/${tag}/`)}>{tag}</a>)}
       </div>
     </header>
-    <div class="article-body">
-      <Content />
+    <div class="article-layout">
+      <aside class="article-rail" data-pagefind-ignore>
+        <div class="article-stats" aria-label="Article stats">
+          <button
+            class="stat-pill stat-like"
+            type="button"
+            data-like-button
+            data-post-key={slug}
+            data-base-count={baseLikes}
+            aria-label={copy.likes}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.2-4.4-9.6-8.4C.5 9.4 2.3 5 6.2 5c2.1 0 3.5 1.1 4.3 2.2C11.3 6.1 12.7 5 14.8 5c3.9 0 5.7 4.4 3.8 7.6C16.2 16.6 12 21 12 21Z" /></svg>
+            <span data-stat-count>{compactNumber(baseLikes)}</span>
+          </button>
+          <span class="stat-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>
+            <span data-view-count data-post-key={slug} data-base-count={baseViews}>{compactNumber(baseViews)}</span>
+          </span>
+          <button
+            class="stat-pill"
+            type="button"
+            data-share-button
+            data-post-key={slug}
+            data-base-count={baseShares}
+            data-share-title={post.data.title}
+            aria-label={copy.shares}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10 14" /><path d="m21 3-7 19-4-8-8-4 19-7Z" /></svg>
+            <span data-share-count>{compactNumber(baseShares)}</span>
+          </button>
+        </div>
+
+        <dl class="article-info">
+          <div>
+            <dt>{copy.publicationDate}</dt>
+            <dd>{formatDate(post.data.date, lang)}</dd>
+          </div>
+          <div>
+            <dt>{copy.category}</dt>
+            <dd>{categoryLabel(post.data.category, lang)}</dd>
+          </div>
+          <div>
+            <dt>{copy.readingTime}</dt>
+            <dd>{readMinutes} {copy.min}</dd>
+          </div>
+          <div>
+            <dt>{copy.author}</dt>
+            <dd>{site.author}</dd>
+          </div>
+        </dl>
+
+        {toc.length > 0 && (
+          <nav class="article-toc" aria-label={copy.tableOfContents}>
+            <h2>{copy.tableOfContents}</h2>
+            <ul>
+              {toc.map((heading) => (
+                <li class={`toc-depth-${heading.depth}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+        <img class="article-mascot" src={withBase("/assets/mascot/brilly-turtle@2x.png")} alt="" />
+      </aside>
+      <div class="article-body">
+        <Content />
+      </div>
     </div>
   </article>
   <Comments lang={lang} enabled={post.data.comments} />

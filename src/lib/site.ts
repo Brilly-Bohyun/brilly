@@ -1,9 +1,11 @@
 export const site = {
   name: "Brilly",
+  author: "Bohyun Choi",
   owner: "Brilly-Bohyun",
   repo: "Brilly-Bohyun/brilly",
   description: "Open source, systems, talks, and things learned the hard way.",
-  github: "https://github.com/Brilly-Bohyun"
+  github: "https://github.com/Brilly-Bohyun",
+  linkedin: "https://www.linkedin.com/in/bohyunchoi/"
 };
 
 export const languages = ["ko", "en"] as const;
