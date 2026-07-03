@@ -905,6 +905,21 @@ button.stat-pill {
   color: var(--accent);
 }
 
+.article-body img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 1.8rem 0 0.55rem;
+}
+
+.article-body img + p {
+  margin-top: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  text-align: center;
+}
+
 .article-body blockquote {
   border-left: 2px solid var(--accent);
   margin: 1.4rem 0;
