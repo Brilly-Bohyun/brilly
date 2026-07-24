@@ -12,7 +12,22 @@ export const taxonomy = {
   talks: {
     label: { ko: "발표", en: "Talks" },
     subcategories: {
-      conference: { ko: "컨퍼런스", en: "Conference" }
+      conference: { ko: "컨퍼런스", en: "Conference" },
+      workshop: { ko: "워크숍", en: "Workshop" }
+    }
+  },
+  methods: {
+    label: { ko: "방법론", en: "Methods" },
+    subcategories: {
+      "working-backwards": { ko: "Working Backwards", en: "Working Backwards" }
+    }
+  },
+  projects: {
+    label: { ko: "프로젝트", en: "Projects" },
+    subcategories: {
+      kuberca: { ko: "KubeRCA", en: "KubeRCA" },
+      "runai-rca": { ko: "Run:AI RCA", en: "Run:AI RCA" },
+      prototypes: { ko: "AI 프로토타입", en: "AI Prototypes" }
     }
   },
   "open-source": {
@@ -24,7 +39,9 @@ export const taxonomy = {
   engineering: {
     label: { ko: "엔지니어링", en: "Engineering" },
     subcategories: {
-      debugging: { ko: "디버깅", en: "Debugging" }
+      debugging: { ko: "디버깅", en: "Debugging" },
+      "ai-platform": { ko: "AI 플랫폼", en: "AI Platform" },
+      "incident-response": { ko: "장애 대응", en: "Incident Response" }
     }
   }
 } satisfies Record<string, { label: Localized; subcategories: Record<string, Localized> }>;
