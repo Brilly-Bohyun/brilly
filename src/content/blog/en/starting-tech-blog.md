@@ -13,6 +13,8 @@ comments: true
 
 I am starting this blog as **Brilly**: a small place to keep the lessons that are too useful to leave scattered across notes, slides, and half-remembered debugging sessions.
 
+![Bohyun Choi, writing Brilly](/brilly/assets/blog/author/bohyun.jpg)
+
 The plan is to write about open source, conference talks, engineering problems, and the judgment that forms while working through them. I want this to be less of a highlight reel and more of a trail: what I tried, what changed my mind, and what I would do differently next time.
 
 ## What I will write about
